@@ -431,12 +431,24 @@ function beepLoop(){
   o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+0.25);
   setTimeout(beepLoop,420);
 }
-// One-shot Audio-Aktivierung beim ersten Klick/Tap irgendwo (Browser-Pflicht für Sound)
+// Audio so aggressiv wie möglich freischalten — alle Browser-Events triggern Resume
 function silentActivate(){ensureAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});}
-document.addEventListener('click',silentActivate,{once:true});
-document.addEventListener('touchstart',silentActivate,{once:true,passive:true});
-// Audio-Init versuchen — wenn Browser autoplay-Policy es erlaubt, läuft Ton auch ohne Tap
+['click','touchstart','keydown','mousemove','pointerdown','scroll','focus','visibilitychange'].forEach(ev=>{
+  const tgt=ev==='visibilitychange'?document:window;
+  tgt.addEventListener(ev,silentActivate,{passive:true,capture:true});
+});
 ensureAudio();
+// Bootstrap via stilles muted Audio-Element (autoplay+muted ist überall erlaubt) — initialisiert Audio-System
+(function(){
+  const a=document.createElement('audio');
+  a.autoplay=true;a.muted=true;a.loop=true;a.playsInline=true;
+  a.src='data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+  a.style.cssText='position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
+  document.body.appendChild(a);
+  a.play().catch(()=>{});
+})();
+// Retry-Resume jede Sekunde solange suspended (für Browser die delayed unlock machen)
+setInterval(()=>{if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});},2000);
 function fit(){const s=Math.min(window.innerWidth/1920,window.innerHeight/1080);document.body.style.transform=`scale(${s})`;}
 window.addEventListener('resize',fit);fit();
 function p(n){return String(Math.max(0,n)).padStart(2,'0');}
