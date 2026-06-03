@@ -168,14 +168,14 @@
   /* DURCHFAHRER-MARKIERUNG */
   .drow.pass{color:rgba(255,255,255,0.6);}
   .drow.pass .ddest::after{content:' ⊝';color:var(--sbb-yellow);opacity:0.7;font-size:11px;letter-spacing:0;}
-  /* VORAUS-ZEITSTRAHL */
-  .tline{margin-top:22px;width:540px;z-index:2;max-width:96%;}
-  .tlabel{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;opacity:0.45;margin-bottom:6px;text-align:center;}
-  .tbar{position:relative;height:26px;background:rgba(0,200,83,0.14);border:1px solid rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;}
+  /* VORAUS-ZEITSTRAHL — sitzt am unteren Ende der rechten Spalte */
+  .tline{padding:10px 14px 12px;border-top:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.18);}
+  .tlabel{font-size:10px;letter-spacing:2px;text-transform:uppercase;opacity:0.5;margin-bottom:6px;text-align:center;}
+  .tbar{position:relative;height:22px;background:rgba(0,200,83,0.14);border:1px solid rgba(255,255,255,0.08);border-radius:4px;overflow:hidden;}
   .tblk{position:absolute;top:0;bottom:0;background:rgba(235,0,0,0.78);box-shadow:inset 0 0 8px rgba(0,0,0,0.4);}
   .tblk.pass{background:rgba(255,102,0,0.65);}
   .tnow{position:absolute;top:-3px;bottom:-3px;left:0;width:2px;background:var(--sbb-yellow);box-shadow:0 0 8px var(--sbb-yellow);z-index:3;}
-  .ttick{display:flex;justify-content:space-between;font-size:10px;opacity:0.45;margin-top:4px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+  .ttick{display:flex;justify-content:space-between;font-size:9px;opacity:0.45;margin-top:4px;font-family:'Share Tech Mono',monospace;letter-spacing:0.5px;}
   /* KALIBRIER-BADGE */
   #calbadge{position:fixed;top:6px;left:50%;transform:translateX(-50%);background:rgba(255,212,0,0.92);color:black;padding:3px 10px;font-size:11px;letter-spacing:1.5px;border-radius:3px;font-weight:700;z-index:200;font-family:'Share Tech Mono',monospace;display:none;}
   #calbadge.on{display:block;}
@@ -209,14 +209,17 @@
     #cdunit{font-size:13px;}
     .stbadge{top:auto;right:12px;bottom:12px;padding:5px 10px;font-size:10px;}
     .stbadge b{font-size:15px;}
-    .right{width:100%;flex:0 0 auto;border-left:none;border-top:2px solid rgba(255,255,255,0.07);}
+    .right{width:100%;flex:0 0 auto;border-left:none;border-top:2px solid rgba(255,255,255,0.07);overflow:visible;}
+    .right .dlist{flex:0 0 auto;order:3;}
+    .right .rhead{order:1;}
+    .right .tline{order:2;border-top:none;border-bottom:1px solid rgba(255,255,255,0.08);}
     #nttime{font-size:34px;}
     #ntdest{font-size:16px;}
     .drow{padding:5px 12px;font-size:15px;}
     .footer{font-size:10px;padding:5px 12px;gap:6px;flex-wrap:wrap;}
     .qrwrap{display:none;}
-    .tline{margin-top:14px;width:96vw;}
-    .tbar{height:20px;}
+    .tline{padding:8px 12px 10px;}
+    .tbar{height:18px;}
   }
 </style>
 </head>
@@ -278,11 +281,6 @@
       <div id="cdval">--:--</div>
       <div id="cdunit">Min : Sek</div>
     </div>
-    <div class="tline">
-      <div class="tlabel">Vorschau · nächste 30 Min</div>
-      <div class="tbar" id="tbar"><div class="tnow"></div></div>
-      <div class="ttick"><span>jetzt</span><span>+10</span><span>+20</span><span>+30 Min</span></div>
-    </div>
   </div>
   <div class="right">
     <div class="rhead">
@@ -293,6 +291,11 @@
       </div>
     </div>
     <div class="dlist" id="dlist"><div class="nodata">Verbinde…</div></div>
+    <div class="tline">
+      <div class="tlabel">Vorschau · nächste 30 Min</div>
+      <div class="tbar" id="tbar"><div class="tnow"></div></div>
+      <div class="ttick"><span>jetzt</span><span>+10</span><span>+20</span><span>+30 Min</span></div>
+    </div>
   </div>
 </div>
 <div class="footer">
