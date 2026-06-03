@@ -156,9 +156,9 @@
   body.night{filter:brightness(0.65) saturate(0.8);}
   body.night .ring{animation:none!important;}
   body.night .left.closed .ring{box-shadow:0 0 60px rgba(235,0,0,0.25)!important;}
-  /* AKTIVIERUNGS-BANNER */
-  #act{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);border:2px solid var(--sbb-yellow);color:var(--sbb-yellow);padding:10px 22px;border-radius:8px;font-size:15px;letter-spacing:2px;cursor:pointer;z-index:100;transition:opacity 0.4s;text-transform:uppercase;font-weight:700;}
-  #act.gone{display:none;}
+  /* DURCHFAHRER-MARKIERUNG */
+  .drow.pass{color:rgba(255,255,255,0.6);}
+  .drow.pass .ddest::after{content:' ⊝';color:var(--sbb-yellow);opacity:0.7;font-size:11px;letter-spacing:0;}
   /* MOBILE / PORTRAIT */
   @media (max-aspect-ratio: 1/1), (max-width: 820px){
     html,body{width:100%!important;height:100%!important;}
@@ -194,8 +194,7 @@
     #ntdest{font-size:16px;}
     .drow{padding:5px 12px;font-size:15px;}
     .footer{font-size:10px;padding:5px 12px;gap:6px;flex-wrap:wrap;}
-    .qrwrap img{width:30px;height:30px;}
-    #act{font-size:13px;padding:8px 16px;bottom:30px;}
+    .qrwrap{display:none;}
   }
 </style>
 </head>
@@ -275,14 +274,15 @@
   <span class="qrwrap"><img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&bgcolor=ffffff&data=https%3A%2F%2Fimpat83.github.io%2Fsbb-display%2F" alt="QR"><span>Live auf dem Handy</span></span>
   <span>transport.opendata.ch · ~Schätzung</span>
 </div>
-<div id="act" title="Aktivieren">Tippen für Vollbild + Ton</div>
 <div id="ov">
   <div class="st stl"></div><div class="st str"></div>
   <div class="stt"></div><div class="stb"></div>
 </div>
 <script>
 const STATION="Alpnach Dorf", REFRESH=30000;
-const WARN=3*60, CLOSE=2*60, AFTER=30;
+const NEIGH_N="Alpnachstad", NEIGH_S="Sarnen";
+const TRAVEL=180; // geschätzte Sekunden vom Nachbarbahnhof bis Alpnach Dorf — bei Bedarf via Realmessung tunen
+const WARN=3*60, CLOSE=2*60, AFTER=30, AFTER_PASS=10;
 const NORTH=/luzern/i, SOUTH=/giswil|brienz|meiringen|interlaken|lungern|engelberg|brünig/i;
 let deps=[], state='open', lastFetchOk=0, audioCtx=null, beepEnd=0, stats={d:'',c:0};
 // Uhr
@@ -303,16 +303,26 @@ function drawClock(){
 }
 function updClk(){const n=new Date();document.getElementById('clk').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;}
 // Fahrplan
+async function fetchSb(station){
+  const r=await fetch(`https://transport.opendata.ch/v1/stationboard?station=${encodeURIComponent(station)}&limit=12`);
+  const d=await r.json();
+  return (d.stationboard||[]).map(t=>{
+    const dep=t.stop.departure?new Date(t.stop.departure):null;
+    const prg=t.stop.prognosis?.departure?new Date(t.stop.prognosis.departure):null;
+    const act=prg||dep;
+    return{ts:act?act.getTime()/1000:null,time:dep?fmt(dep):'--:--',cat:t.category||'',to:t.to||'–',dly:(prg&&dep)?Math.round((prg-dep)/60000):0,name:t.name||(t.category+' '+t.number)||''};
+  }).filter(t=>t.ts);
+}
 async function load(){
   try{
-    const r=await fetch(`https://transport.opendata.ch/v1/stationboard?station=${encodeURIComponent(STATION)}&limit=10`);
-    const d=await r.json();
-    deps=(d.stationboard||[]).map(t=>{
-      const dep=t.stop.departure?new Date(t.stop.departure):null;
-      const prg=t.stop.prognosis?.departure?new Date(t.stop.prognosis.departure):null;
-      const act=prg||dep;
-      return{ts:act?act.getTime()/1000:null,time:dep?fmt(dep):'--:--',cat:t.category||'',to:t.to||'–',dly:(prg&&dep)?Math.round((prg-dep)/60000):0};
-    }).filter(t=>t.ts);
+    const res=await Promise.allSettled([fetchSb(STATION),fetchSb(NEIGH_N),fetchSb(NEIGH_S)]);
+    const [alp,alpStad,sar]=res.map(r=>r.status==='fulfilled'?r.value:[]);
+    if(!res[0].status==='fulfilled'&&!alpStad.length&&!sar.length)throw new Error('all failed');
+    const stopIds=new Set(alp.map(t=>t.name).filter(Boolean));
+    const through=[];
+    for(const t of alpStad){if(dirOf(t.to)==='S'&&t.name&&!stopIds.has(t.name))through.push({...t,ts:t.ts+TRAVEL,time:fmt(new Date((t.ts+TRAVEL)*1000)),passing:true});}
+    for(const t of sar){if(dirOf(t.to)==='N'&&t.name&&!stopIds.has(t.name))through.push({...t,ts:t.ts+TRAVEL,time:fmt(new Date((t.ts+TRAVEL)*1000)),passing:true});}
+    deps=[...alp,...through].sort((a,b)=>a.ts-b.ts);
     lastFetchOk=Date.now();
     renderList();
     document.getElementById('lupd').textContent='Aktualisiert: '+fmt(new Date());
@@ -321,27 +331,28 @@ async function load(){
 function renderList(){
   if(!deps.length){document.getElementById('dlist').innerHTML='<div class="nodata">Keine Daten</div>';return;}
   const nx=deps[0];
-  document.getElementById('nttime').textContent=nx.time+(nx.dly>0?` +${nx.dly}'`:'');
-  document.getElementById('ntdest').textContent=`${nx.cat} → ${nx.to}`;
+  document.getElementById('nttime').textContent=nx.time+(nx.dly>0?` +${nx.dly}'`:'')+(nx.passing?' ⊝':'');
+  document.getElementById('ntdest').textContent=`${nx.cat} → ${nx.to}${nx.passing?' · Durchfahrt':''}`;
   document.getElementById('dlist').innerHTML=deps.slice(1,8).map(t=>`
-    <div class="drow"><span class="dtime">${t.time}</span><span class="dcat">${t.cat}</span><span class="ddest">${t.to}</span>${t.dly>0?`<span class="ddly">+${t.dly}'</span>`:''}</div>`).join('');
+    <div class="drow${t.passing?' pass':''}"><span class="dtime">${t.time}</span><span class="dcat">${t.cat}</span><span class="ddest">${t.to}</span>${t.dly>0?`<span class="ddly">+${t.dly}'</span>`:''}</div>`).join('');
 }
 // Schranke
 function upd(){
-  const now=Date.now()/1000, rel=deps.find(t=>t.ts>now-AFTER);
+  const now=Date.now()/1000;
+  const rel=deps.find(t=>t.ts>now-(t.passing?AFTER_PASS:AFTER));
   const box=document.getElementById('box'),sm=document.getElementById('stmain'),ss=document.getElementById('stsub'),cv=document.getElementById('cdval'),cu=document.getElementById('cdunit');
-  if(!rel){set('open');sm.textContent='OFFEN';ss.textContent='Keine Züge in Sicht';cv.textContent='–';cu.textContent='';return;}
-  const s=rel.ts-now;
+  if(!rel){set('open');sm.textContent='OFFEN';ss.textContent='Keine Züge in Sicht';cv.textContent='–';cu.textContent='';updateDir(null);updateTrain(null,Infinity);checkDblCls();return;}
+  const s=rel.ts-now, aft=rel.passing?AFTER_PASS:AFTER, pTxt=rel.passing?' · Durchfahrt':'';
   if(s>WARN){
     set('open');sm.textContent='OFFEN';ss.textContent='Durchfahrt freigegeben';
     cv.textContent=`${p(Math.floor(s/60))}:${p(Math.floor(s%60))}`;cu.textContent='bis Schliessung';
   }else if(s>CLOSE){
-    set('warn');sm.textContent='ACHTUNG';ss.textContent=`Schranke schliesst – ${rel.cat} → ${rel.to}`;
+    set('warn');sm.textContent='ACHTUNG';ss.textContent=`Schranke schliesst – ${rel.cat} → ${rel.to}${pTxt}`;
     cv.textContent=`${Math.floor(s-CLOSE)}"`;cu.textContent='bis geschlossen';
-  }else if(s>-AFTER){
+  }else if(s>-aft){
     set('closed');
-    if(s>0){sm.textContent='GESPERRT';ss.textContent=`${rel.cat} → ${rel.to}`;cv.textContent=`${Math.floor(s)}"`;cu.textContent='bis Abfahrt';}
-    else{sm.textContent='GESPERRT';ss.textContent=`Öffnet in ${AFTER+Math.floor(s)} Sek`;cv.textContent=`${AFTER+Math.floor(s)}"`;cu.textContent='bis Öffnung';}
+    if(s>0){sm.textContent='GESPERRT';ss.textContent=`${rel.cat} → ${rel.to}${pTxt}`;cv.textContent=`${Math.floor(s)}"`;cu.textContent=rel.passing?'bis Durchfahrt':'bis Abfahrt';}
+    else{sm.textContent='GESPERRT';ss.textContent=`Öffnet in ${aft+Math.floor(s)} Sek`;cv.textContent=`${aft+Math.floor(s)}"`;cu.textContent='bis Öffnung';}
   }else{
     set('open');sm.textContent='OFFEN';ss.textContent='Durchfahrt freigegeben';
     const n2=deps.find(t=>t.ts>now+10);
@@ -410,7 +421,7 @@ function bumpStats(){
   document.getElementById('stcnt').textContent=stats.c+'×';
 }
 function ensureAudio(){if(!audioCtx)try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}
-function startBeep(){ensureAudio();if(!audioCtx)return;if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});beepEnd=Date.now()+10000;beepLoop();}
+function startBeep(){ensureAudio();if(!audioCtx)return;if(audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});beepEnd=Date.now()+5000;beepLoop();}
 function beepLoop(){
   if(Date.now()>=beepEnd||!audioCtx)return;
   const o=audioCtx.createOscillator(),g=audioCtx.createGain(),t=audioCtx.currentTime;
@@ -420,16 +431,12 @@ function beepLoop(){
   o.connect(g);g.connect(audioCtx.destination);o.start(t);o.stop(t+0.25);
   setTimeout(beepLoop,420);
 }
-function activate(){
-  document.getElementById('act').classList.add('gone');
-  ensureAudio();
-  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});
-  try{if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>{});}catch(e){}
-  if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});
-  try{sessionStorage.setItem('gw_act','1');}catch(e){}
-}
-document.getElementById('act').addEventListener('click',activate);
-try{if(sessionStorage.getItem('gw_act'))document.getElementById('act').classList.add('gone');}catch(e){}
+// One-shot Audio-Aktivierung beim ersten Klick/Tap irgendwo (Browser-Pflicht für Sound)
+function silentActivate(){ensureAudio();if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume().catch(()=>{});}
+document.addEventListener('click',silentActivate,{once:true});
+document.addEventListener('touchstart',silentActivate,{once:true,passive:true});
+// Audio-Init versuchen — wenn Browser autoplay-Policy es erlaubt, läuft Ton auch ohne Tap
+ensureAudio();
 function fit(){const s=Math.min(window.innerWidth/1920,window.innerHeight/1080);document.body.style.transform=`scale(${s})`;}
 window.addEventListener('resize',fit);fit();
 function p(n){return String(Math.max(0,n)).padStart(2,'0');}
