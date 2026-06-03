@@ -1,135 +1,133 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="de">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.4">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bahnschranke – Alpnach Dorf</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;700;900&display=swap');
+  :root{--sbb-blue:#003a8f;--sbb-red:#eb0000;--sbb-yellow:#ffd400;--green:#00c853;--orange:#ff6600;--bg:#001030;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);font-family:'Barlow Condensed',sans-serif;color:white;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+  .header{display:flex;justify-content:space-between;align-items:center;padding:14px 40px;background:var(--sbb-blue);border-bottom:4px solid var(--sbb-yellow);flex-shrink:0;}
+  .hl{display:flex;align-items:center;gap:16px;}
+  .sbb-logo{background:var(--sbb-red);color:white;font-weight:900;font-size:28px;padding:3px 10px;border-radius:3px;letter-spacing:-1px;}
+  .station{font-size:38px;font-weight:700;letter-spacing:1px;}
+  .hr{display:flex;align-items:center;gap:24px;}
+  #clk{font-family:'Share Tech Mono',monospace;font-size:48px;color:var(--sbb-yellow);letter-spacing:4px;}
+  canvas{width:80px;height:80px;}
+  .main{flex:1;display:flex;overflow:hidden;}
+  .left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px 30px;position:relative;transition:background 0.6s;}
+  .left.open{background:radial-gradient(ellipse at center,#002a14 0%,var(--bg) 70%);}
+  .left.warn{background:radial-gradient(ellipse at center,#2a1400 0%,var(--bg) 70%);}
+  .left.closed{background:radial-gradient(ellipse at center,#2a0000 0%,var(--bg) 70%);}
+  .ring{position:absolute;width:540px;height:540px;border-radius:50%;pointer-events:none;border:2px solid transparent;}
+  .open .ring{border-color:rgba(0,200,83,0.2);box-shadow:0 0 80px rgba(0,200,83,0.1);}
+  .warn .ring{border-color:rgba(255,102,0,0.25);animation:rW 2s ease-in-out infinite;}
+  .closed .ring{border-color:rgba(235,0,0,0.3);animation:rC 0.8s ease-in-out infinite;}
+  @keyframes rW{0%,100%{box-shadow:0 0 60px rgba(255,102,0,0.1)}50%{box-shadow:0 0 140px rgba(255,102,0,0.45)}}
+  @keyframes rC{0%,100%{box-shadow:0 0 80px rgba(235,0,0,0.2)}50%{box-shadow:0 0 200px rgba(235,0,0,0.65)}}
+  .scene{position:relative;width:500px;height:360px;z-index:2;}
+  .rail{position:absolute;width:10px;border-radius:2px;background:#777;}
+  .rl{left:125px;}.rr{left:152px;}
+  .sleeper{position:absolute;left:110px;width:58px;height:11px;background:#5a3a20;border-radius:2px;}
+  .road{position:absolute;bottom:0;left:0;right:0;height:64px;background:#1a1a2e;border-top:3px solid #333;}
+  .road-line{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:9px;background:var(--sbb-yellow);border-radius:2px;opacity:0.55;}
+  .post{position:absolute;bottom:62px;width:20px;border-radius:7px 7px 0 0;}
+  .pl{left:58px;height:230px;background:linear-gradient(180deg,#ccc,#888);}
+  .pr{right:58px;height:210px;background:linear-gradient(180deg,#ccc,#888);}
+  .sigbox{position:absolute;width:40px;border-radius:7px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:9px 7px;background:#1a1a1a;border:2px solid #3a3a3a;}
+  .sbl{left:38px;bottom:295px;}.sbr{right:38px;bottom:275px;}
+  .dot{width:24px;height:24px;border-radius:50%;background:#1a1a1a;transition:background 0.3s,box-shadow 0.3s;}
+  .open .dr{background:#1a0000;box-shadow:none;}.open .dg{background:var(--green);box-shadow:0 0 14px var(--green);}
+  .warn .dr{background:var(--orange);animation:bO 1s step-start infinite;box-shadow:0 0 12px var(--orange);}
+  .warn .dg{background:var(--orange);animation:bO 1s step-start infinite 0.5s;box-shadow:0 0 12px var(--orange);}
+  .closed .dr{background:var(--sbb-red);animation:bR 0.5s step-start infinite;box-shadow:0 0 16px var(--sbb-red);}
+  .closed .dg{background:#1a0000;box-shadow:none;}
+  @keyframes bO{0%,49%{opacity:1}50%,100%{opacity:0.1}}
+  @keyframes bR{0%,49%{opacity:1}50%,100%{opacity:0.15}}
+  .arm{position:absolute;height:22px;border-radius:5px;z-index:5;box-shadow:0 3px 10px rgba(0,0,0,0.6);}
+  .arm::after{content:'';position:absolute;top:-5px;width:14px;height:32px;background:var(--sbb-red);border-radius:4px;}
+  .al{left:78px;bottom:288px;width:230px;transform-origin:left center;background:repeating-linear-gradient(90deg,var(--sbb-red) 0,var(--sbb-red) 26px,white 26px,white 52px);transition:transform 1.4s cubic-bezier(0.4,0,0.2,1);}
+  .al::after{right:-7px;}
+  .ar{right:78px;bottom:268px;width:210px;transform-origin:right center;background:repeating-linear-gradient(90deg,white 0,white 26px,var(--sbb-red) 26px,var(--sbb-red) 52px);transition:transform 1.4s cubic-bezier(0.4,0,0.2,1);}
+  .ar::after{left:-7px;}
+  .open .al{transform:rotate(-72deg);}.open .ar{transform:rotate(72deg);}
+  .warn .al{transform:rotate(-36deg);animation:wL 2s ease-in-out infinite;}
+  .warn .ar{transform:rotate(36deg);animation:wR 2s ease-in-out infinite;}
+  .closed .al{transform:rotate(0deg);}.closed .ar{transform:rotate(0deg);}
+  @keyframes wL{0%,100%{transform:rotate(-36deg)}50%{transform:rotate(-26deg)}}
+  @keyframes wR{0%,100%{transform:rotate(36deg)}50%{transform:rotate(26deg)}}
+  .statusarea{z-index:2;text-align:center;margin-top:18px;}
+  #stmain{font-size:100px;font-weight:900;line-height:1;letter-spacing:4px;transition:color 0.4s;}
+  .open #stmain{color:var(--green);}.warn #stmain{color:var(--orange);}
+  .closed #stmain{color:var(--sbb-red);animation:tP 0.8s ease-in-out infinite;}
+  @keyframes tP{0%,100%{opacity:1}50%{opacity:0.55}}
+  #stsub{font-size:28px;font-weight:400;opacity:0.75;margin-top:6px;}
+  .cdbox{z-index:2;margin-top:20px;text-align:center;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 44px;min-width:300px;}
+  .cdlbl{font-size:15px;letter-spacing:3px;text-transform:uppercase;opacity:0.45;margin-bottom:4px;}
+  #cdval{font-family:'Share Tech Mono',monospace;font-size:84px;line-height:1;color:var(--sbb-yellow);transition:color 0.3s;}
+  .warn #cdval{color:var(--orange);}.closed #cdval{color:var(--sbb-red);}
+  #cdunit{font-size:17px;opacity:0.5;letter-spacing:2px;margin-top:3px;}
+  .right{width:320px;flex-shrink:0;background:rgba(0,0,0,0.3);border-left:2px solid rgba(255,255,255,0.07);display:flex;flex-direction:column;overflow:hidden;}
+  .rhead{padding:14px 16px 10px;border-bottom:1px solid rgba(255,255,255,0.08);}
+  .ntblock{background:var(--sbb-yellow);color:black;border-radius:6px;padding:10px 14px;}
+  .ntlbl{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;opacity:0.6;}
+  #nttime{font-size:46px;font-weight:900;line-height:1;}
+  #ntdest{font-size:20px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .dlist{flex:1;overflow:hidden;padding:4px 0;}
+  .drow{display:flex;align-items:center;padding:7px 16px;border-bottom:1px solid rgba(255,255,255,0.05);gap:10px;font-size:19px;}
+  .dtime{font-weight:700;width:50px;flex-shrink:0;font-family:'Share Tech Mono',monospace;}
+  .dcat{font-size:14px;background:rgba(255,255,255,0.1);border-radius:3px;padding:1px 6px;flex-shrink:0;}
+  .ddest{flex:1;opacity:0.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ddly{flex-shrink:0;color:var(--sbb-red);font-size:15px;}
+  .nodata{text-align:center;padding:20px;opacity:0.35;font-size:17px;}
+  .footer{flex-shrink:0;padding:6px 40px;background:rgba(0,0,0,0.45);display:flex;justify-content:space-between;font-size:13px;opacity:0.4;letter-spacing:1px;}
+  #ov{display:none;position:fixed;inset:0;pointer-events:none;z-index:50;}
+  .st{position:absolute;background:repeating-linear-gradient(0deg,var(--sbb-red) 0,var(--sbb-red) 30px,#000 30px,#000 60px);animation:sv 1.2s linear infinite;opacity:0.8;}
+  .stl{left:0;top:0;bottom:0;width:38px;}.str{right:0;top:0;bottom:0;width:38px;animation-direction:reverse;}
+  .stt{top:0;left:0;right:0;height:24px;background:repeating-linear-gradient(90deg,var(--sbb-red) 0,var(--sbb-red) 30px,#000 30px,#000 60px);animation:sh 1.2s linear infinite;opacity:0.8;}
+  .stb{bottom:0;left:0;right:0;height:24px;background:repeating-linear-gradient(90deg,var(--sbb-red) 0,var(--sbb-red) 30px,#000 30px,#000 60px);animation:sh 1.2s linear infinite reverse;opacity:0.8;}
+  @keyframes sv{to{background-position:0 60px;}}@keyframes sh{to{background-position:60px 0;}}
+</style>
 </head>
 <body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="de"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1">&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1">&lt;title&gt;SBB Abfahrten&lt;/title&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;style&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">body{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>margin:0;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>background:#003a8f;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>font-family:Helvetica, Arial, sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>color:white;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.header{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>justify-content:space-between;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>align-items:center;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>padding:30px 60px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>font-size:60px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>font-weight:600;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.clock{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>font-size:50px;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">table{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>width:100%;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>border-collapse:collapse;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>font-size:70px;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">td{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>padding:25px 60px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>border-top:3px solid rgba(255,255,255,0.2);</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.time{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>width:220px;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.line{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>width:200px;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.platform{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>text-align:right;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>width:200px;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">.delay{</p>
-<p class="p1"><span class="Apple-converted-space">    </span>color:#ffcc00;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;div class="header"&gt;</p>
-<p class="p1">&lt;div&gt;Abfahrten Alpnach Dorf&lt;/div&gt;</p>
-<p class="p1">&lt;div class="clock" id="clock"&gt;&lt;/div&gt;</p>
-<p class="p1">&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;table id="board"&gt;&lt;/table&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">function updateClock(){</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const now = new Date();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const hh = String(now.getHours()).padStart(2,"0");</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const mm = String(now.getMinutes()).padStart(2,"0");</p>
-<p class="p1"><span class="Apple-converted-space">    </span>document.getElementById("clock").innerText = hh + ":" + mm;</p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">setInterval(updateClock,1000);</p>
-<p class="p1">updateClock();</p>
-<p class="p2"><br></p>
-<p class="p1">async function loadDepartures(){</p>
-<p class="p2"><br></p>
-<p class="p1">const response = await fetch("https://transport.opendata.ch/v1/stationboard?station=Alpnach%20Dorf&amp;limit=8");</p>
-<p class="p1">const data = await response.json();</p>
-<p class="p2"><br></p>
-<p class="p1">const table = document.getElementById("board");</p>
-<p class="p1">table.innerHTML="";</p>
-<p class="p2"><br></p>
-<p class="p1">data.stationboard.forEach(train =&gt; {</p>
-<p class="p2"><br></p>
-<p class="p1">const time = new Date(train.stop.departure);</p>
-<p class="p1">const hh = String(time.getHours()).padStart(2,"0");</p>
-<p class="p1">const mm = String(time.getMinutes()).padStart(2,"0");</p>
-<p class="p2"><br></p>
-<p class="p1">const delay = train.stop.delay ? "+" + train.stop.delay : "";</p>
-<p class="p2"><br></p>
-<p class="p1">const row = `</p>
-<p class="p1">&lt;tr&gt;</p>
-<p class="p1">&lt;td class="time"&gt;${hh}:${mm}&lt;/td&gt;</p>
-<p class="p1">&lt;td class="line"&gt;${train.category}&lt;/td&gt;</p>
-<p class="p1">&lt;td&gt;${train.to}&lt;/td&gt;</p>
-<p class="p1">&lt;td class="delay"&gt;${delay}&lt;/td&gt;</p>
-<p class="p1">&lt;td class="platform"&gt;${train.stop.platform || ""}&lt;/td&gt;</p>
-<p class="p1">&lt;/tr&gt;</p>
-<p class="p1">`;</p>
-<p class="p2"><br></p>
-<p class="p1">table.innerHTML += row;</p>
-<p class="p2"><br></p>
-<p class="p1">});</p>
-<p class="p2"><br></p>
-<p class="p1">}</p>
-<p class="p2"><br></p>
-<p class="p1">loadDepartures();</p>
-<p class="p1">setInterval(loadDepartures,30000);</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;/script&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+<div class="header"><div class="hl"><div class="sbb-logo">SBB</div><div class="station">Bahnhof Alpnach Dorf</div></div><div class="hr"><div id="clk">--:--:--</div><canvas id="cvs"></canvas></div></div>
+<div class="main">
+  <div class="left open" id="box">
+    <div class="ring"></div>
+    <div class="scene">
+      <div class="sleeper" style="bottom:62px"></div><div class="sleeper" style="bottom:84px"></div><div class="sleeper" style="bottom:106px"></div><div class="sleeper" style="bottom:128px"></div><div class="sleeper" style="bottom:150px"></div><div class="sleeper" style="bottom:172px"></div><div class="sleeper" style="bottom:194px"></div><div class="sleeper" style="bottom:216px"></div><div class="sleeper" style="bottom:238px"></div><div class="sleeper" style="bottom:260px"></div><div class="sleeper" style="bottom:282px"></div><div class="sleeper" style="bottom:304px"></div>
+      <div class="rail rl" style="bottom:62px;height:300px;"></div><div class="rail rr" style="bottom:62px;height:300px;"></div>
+      <div class="road"><div class="road-line"></div></div>
+      <div class="post pl"></div><div class="post pr"></div>
+      <div class="sigbox sbl"><div class="dot dr"></div><div class="dot dg"></div></div><div class="sigbox sbr"><div class="dot dr"></div><div class="dot dg"></div></div>
+      <div class="arm al"></div><div class="arm ar"></div>
+    </div>
+    <div class="statusarea"><div id="stmain">OFFEN</div><div id="stsub">Zufahrt Feuerwehr freigegeben</div></div>
+    <div class="cdbox"><div class="cdlbl">Nächste Schliessung</div><div id="cdval">--:--</div><div id="cdunit">Min : Sek</div></div>
+  </div>
+  <div class="right">
+    <div class="rhead"><div class="ntblock"><div class="ntlbl">Nächster Zug</div><div id="nttime">–</div><div id="ntdest">Wird geladen…</div></div></div>
+    <div class="dlist" id="dlist"><div class="nodata">Verbinde…</div></div>
+  </div>
+</div>
+<div class="footer"><span>Feuerwehr Alpnach</span><span id="lupd">–</span><span>transport.opendata.ch · ~Schätzung</span></div>
+<div id="ov"><div class="st stl"></div><div class="st str"></div><div class="stt"></div><div class="stb"></div></div>
+<script>
+const STATION="Alpnach Dorf",REFRESH=30000,WARN=3*60,CLOSE=2*60,AFTER=30;
+let deps=[],state='open';
+const cvs=document.getElementById('cvs'),ctx=cvs.getContext('2d');cvs.width=cvs.height=80;
+function drawClock(){const n=new Date(),R=36,cx=40,cy=40;ctx.clearRect(0,0,80,80);ctx.beginPath();ctx.arc(cx,cy,R,0,2*Math.PI);ctx.fillStyle='#002060';ctx.fill();ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=2;ctx.stroke();for(let i=0;i<60;i++){const a=i/60*2*Math.PI-Math.PI/2,l=i%5?3:6;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*(R-l),cy+Math.sin(a)*(R-l));ctx.lineTo(cx+Math.cos(a)*R,cy+Math.sin(a)*R);ctx.strokeStyle='white';ctx.lineWidth=i%5?1:2;ctx.stroke();}const h=n.getHours()%12,m=n.getMinutes(),s=n.getSeconds();const draw=(ang,len,w,col)=>{ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(ang)*len,cy+Math.sin(ang)*len);ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.stroke();};draw((h+m/60+s/3600)/12*2*Math.PI-Math.PI/2,R-14,4,'white');draw((m+s/60)/60*2*Math.PI-Math.PI/2,R-6,3,'white');draw(s/60*2*Math.PI-Math.PI/2,R-4,1.5,'#eb0000');ctx.beginPath();ctx.arc(cx,cy,3,0,2*Math.PI);ctx.fillStyle='white';ctx.fill();}
+function updClk(){const n=new Date();document.getElementById('clk').textContent=p(n.getHours())+':'+p(n.getMinutes())+':'+p(n.getSeconds());}
+async function load(){try{const r=await fetch('https://transport.opendata.ch/v1/stationboard?station='+encodeURIComponent(STATION)+'&limit=10');const d=await r.json();deps=(d.stationboard||[]).map(t=>{const dep=t.stop.departure?new Date(t.stop.departure):null;const prg=t.stop.prognosis&&t.stop.prognosis.departure?new Date(t.stop.prognosis.departure):null;const act=prg||dep;return{ts:act?act.getTime()/1000:null,time:dep?fmt(dep):'--:--',cat:t.category||'',to:t.to||'\u2013',dly:(prg&&dep)?Math.round((prg-dep)/60000):0};}).filter(t=>t.ts);renderList();document.getElementById('lupd').textContent='Aktualisiert: '+fmt(new Date());}catch(e){document.getElementById('dlist').innerHTML='<div class="nodata">Verbindung unterbrochen</div>';}}
+function renderList(){if(!deps.length){document.getElementById('dlist').innerHTML='<div class="nodata">Keine Daten</div>';return;}const nx=deps[0];document.getElementById('nttime').textContent=nx.time+(nx.dly>0?' +'+nx.dly+"'":'');document.getElementById('ntdest').textContent=nx.cat+' \u2192 '+nx.to;document.getElementById('dlist').innerHTML=deps.slice(1,8).map(t=>'<div class="drow"><span class="dtime">'+t.time+'</span><span class="dcat">'+t.cat+'</span><span class="ddest">'+t.to+'</span>'+(t.dly>0?'<span class="ddly">+'+t.dly+"'</span>":'')+'</div>').join('');}
+function upd(){const now=Date.now()/1000,rel=deps.find(t=>t.ts>now-AFTER);const sm=document.getElementById('stmain'),ss=document.getElementById('stsub'),cv=document.getElementById('cdval'),cu=document.getElementById('cdunit');if(!rel){set('open');sm.textContent='OFFEN';ss.textContent='Keine Z\u00fcge in Sicht';cv.textContent='\u2013';cu.textContent='';return;}const s=rel.ts-now;if(s>WARN){set('open');sm.textContent='OFFEN';ss.textContent='Zufahrt Feuerwehr freigegeben';cv.textContent=p(Math.floor(s/60))+':'+p(Math.floor(s%60));cu.textContent='bis Schliessung';}else if(s>CLOSE){set('warn');sm.textContent='ACHTUNG';ss.textContent='Schranke schliesst \u2013 '+rel.cat+' \u2192 '+rel.to;cv.textContent=Math.floor(s-CLOSE)+'"';cu.textContent='bis geschlossen';}else if(s>-AFTER){set('closed');if(s>0){sm.textContent='GESPERRT';ss.textContent=rel.cat+' \u2192 '+rel.to;cv.textContent=Math.floor(s)+'"';cu.textContent='bis Abfahrt';}else{sm.textContent='GESPERRT';ss.textContent='\u00d6ffnet in '+(AFTER+Math.floor(s))+' Sek';cv.textContent=(AFTER+Math.floor(s))+'"';cu.textContent='bis \u00d6ffnung';}}else{set('open');sm.textContent='OFFEN';ss.textContent='Zufahrt Feuerwehr freigegeben';const n2=deps.find(t=>t.ts>now+10);if(n2){cv.textContent=p(Math.floor((n2.ts-now)/60))+':'+p(Math.floor((n2.ts-now)%60));cu.textContent='bis Schliessung';}else{cv.textContent='\u2013';cu.textContent='';}}}
+function set(s){if(state===s)return;state=s;document.getElementById('box').className='left '+s;document.getElementById('ov').style.display=s==='closed'?'block':'none';}
+function p(n){return String(Math.max(0,n)).padStart(2,'0');}
+function fmt(d){return p(d.getHours())+':'+p(d.getMinutes());}
+function tick(){drawClock();updClk();upd();}
+load();setInterval(load,REFRESH);setInterval(tick,1000);tick();
+</script>
 </body>
 </html>
