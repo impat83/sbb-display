@@ -1,0 +1,14 @@
+{
+  "name": "CrossingCast Alpnach Dorf",
+  "short_name": "CrossingCast",
+  "description": "Bahnschranken-Anzeige Alpnach Dorf",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#001030",
+  "theme_color": "#003a8f",
+  "icons": [
+    {"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}
+  ]
+}
